@@ -1,4 +1,4 @@
-// This sample program demonstrates how to use the pool package
+// This sample program demonstrates how to use the respool package
 // to share a simulated set of database connections.
 package main
 
@@ -78,7 +78,7 @@ func main() {
 } // main()
 
 // performQueries tests the resource pool of connections.
-func performQueries(aQuery int, aPool *respool.tResPool) {
+func performQueries(aQuery int, aPool *respool.TResPool) {
 	// Get a connection from the pool.
 	conn, err := aPool.Get()
 	if nil != err {
