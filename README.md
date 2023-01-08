@@ -10,10 +10,22 @@
 [![License](https://img.shields.io/github/mwat56/respool.svg)](https://github.com/mwat56/respool/blob/main/LICENSE)
 
 ----
+<!-- TOC -->
 
+- [respool](#respool)
+	- [Purpose](#purpose)
+	- [Installation](#installation)
+	- [Usage](#usage)
+	- [Libraries](#libraries)
+	- [Credits](#credits)
+	- [Licence](#licence)
+
+<!-- /TOC -->
 ## Purpose
 
-    //TODO
+Once in a while you'll find yourself needing some kind of a pool that holds some recyclable resources like – for example – database connections (which can be quite expensive).
+A FiFo like (First In First Out) list comes to mind which could take any resources and give them back.
+However, `Go` provides a much smarter data structure for this purpose: `channels`. And such a `channel` serves internally as the backbone of this resources pool.
 
 ## Installation
 
@@ -27,9 +39,17 @@ You can use `Go` to install this package for you:
 
 ## Libraries
 
-The following external libraries were used building `respool`:
+No external libraries were used building `respool`.
 
-* [ApacheLogger](https://github.com/mwat56/apachelogger)
+## Credits
+
+This package is based on the "pool" example in
+
+	William Kennedy, Brian Ketelsen, Erik St. Martin:
+	Go in Action; Shelter Island: Manning, 2015; Chapter 7
+	Example provided with help from Fatih Arslan and Gabriel Aszalos.
+
+with some modifications and additions from me.
 
 ## Licence
 
