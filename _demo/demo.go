@@ -52,6 +52,9 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(maxGoroutines)
 
+	// show more output
+	respool.DEBUG = true
+
 	// Create the pool to manage our connections.
 	pool, err := respool.New(createConnection, lenResources, capResources)
 	if nil != err {
