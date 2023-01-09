@@ -64,7 +64,7 @@ func (pool *TResPool) Cap() int {
 
 // `Close` will shutdown the pool and close all existing resources.
 func (pool *TResPool) Close() error {
-	// Sync this operation with the Release operation.
+	// Sync this operation with the Put operation.
 	pool.mtx.Lock()
 	defer pool.mtx.Unlock()
 
@@ -124,7 +124,7 @@ func (pool *TResPool) Get() (io.Closer, error) {
 
 // `IsClosed` tells whether the pool is already closed.
 func (pool *TResPool) IsClosed() bool {
-	// Sync this operation with other operations.
+	// Sync this operation with Close/Put operations.
 	pool.mtx.Lock()
 	defer pool.mtx.Unlock()
 
@@ -149,6 +149,9 @@ func (pool *TResPool) Put(aResource io.Closer) {
 
 	// If the pool is closed, discard the resource.
 	if pool.closed {
+		if DEBUG {
+			log.Println("Put:", "Queue already closed")
+		}
 		aResource.Close()
 		return
 	}
@@ -157,21 +160,19 @@ func (pool *TResPool) Put(aResource io.Closer) {
 	// Try to place the resource on the queue.
 	case pool.resources <- aResource:
 		if DEBUG {
-			log.Println("Put:", "In Queue")
+			log.Println("Put:", "Into Queue")
 		}
 		return
 
 	// If the queue is already at cap we close the resource.
 	default:
-		if DEBUG {
-			log.Println("Put:", "Closing")
-		}
-
 		select {
 		case res, ok := <-pool.resources:
 			// Get the first/oldest pool element.
 			if ok {
-				res.Close()
+				if err := res.Close(); (nil == err) && DEBUG {
+					log.Println("Put:", "Closed oldest")
+				}
 			}
 
 		case pool.resources <- aResource:
@@ -179,7 +180,9 @@ func (pool *TResPool) Put(aResource io.Closer) {
 			return
 
 		default:
-			aResource.Close()
+			if err := aResource.Close(); (nil == err) && DEBUG {
+				log.Println("Put:", "Closed newest")
+			}
 		}
 	} // select
 } // Put()
@@ -200,7 +203,7 @@ func New(aFunc func() (io.Closer, error), aLen, aCap int) (*TResPool, TPoolErr) 
 		}
 		return nil, ErrPoolCapacity
 	}
-	if (0 > aLen) || (aCap < aLen) {
+	if (0 > aLen) || (aLen > aCap) {
 		if DEBUG {
 			log.Println("New:", "Invalid pool len:", aLen)
 		}

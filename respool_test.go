@@ -221,7 +221,7 @@ func TestTResPool_Put(t *testing.T) {
 		aResource io.Closer
 	}
 	DEBUG = true
-	p1, _ := New(testFactory, 1, 3)
+	p1, _ := New(testFactory, 1, 2)
 	c1 := TCloser{testClose}
 
 	tests := []struct {
@@ -231,6 +231,9 @@ func TestTResPool_Put(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 		{"1", p1, c1},
+		{"2", p1, c1},
+		{"3", p1, c1},
+		{"4", p1, c1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
