@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"io"
 	"log"
 	"math/rand"
@@ -16,8 +17,8 @@ import (
 //lint:file-ignore ST1017 - I prefer Yoda conditions
 
 const (
-	maxGoroutines = 23 // the number of routines to use.
-	capResources  = 13 // max. number of resources in the pool
+	maxGoroutines = 13 // the number of routines to use
+	capResources  = 11 // max. number of resources in the pool
 	lenResources  = 7  // init number of resources in the pool
 )
 
@@ -47,8 +48,29 @@ func createConnection() (io.Closer, error) {
 	return &dbConnection{id}, nil
 } // createConnection()
 
+// performQueries tests the resource pool of connections.
+func performQueries(aContext context.Context, aQuery int, aPool *respool.TResPool) {
+	// Get a connection from the pool.
+	conn, err := aPool.Get(aContext)
+	if nil != err {
+		log.Println(err)
+		return
+	}
+
+	// Put the connection back into the pool.
+	defer aPool.Put(aContext, conn)
+
+	// Wait to simulate a query response.
+	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+
+	log.Printf("Query: QID[%d] CID[%d] CAP[%d] LEN[%d]\n", aQuery, conn.(*dbConnection).ID, aPool.Cap(), aPool.Len())
+} // performQueries()
+
 // `main` is the entry point for all Go programs.
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	var wg sync.WaitGroup
 	wg.Add(maxGoroutines)
 
@@ -67,10 +89,13 @@ func main() {
 		// value else they will all be sharing the same
 		// query variable.
 		go func(aQuery int) {
-			performQueries(aQuery, pool)
+			performQueries(ctx, aQuery, pool)
 			wg.Done()
 		}(query)
 	} // for
+
+	time.Sleep(time.Millisecond * 0)
+	cancel()
 
 	// Wait for the goroutines to finish.
 	wg.Wait()
@@ -79,22 +104,5 @@ func main() {
 	log.Println("Shutdown Program.")
 	pool.Close()
 } // main()
-
-// performQueries tests the resource pool of connections.
-func performQueries(aQuery int, aPool *respool.TResPool) {
-	// Get a connection from the pool.
-	conn, err := aPool.Get()
-	if nil != err {
-		log.Println(err)
-		return
-	}
-
-	// Put the connection back into the pool.
-	defer aPool.Put(conn)
-
-	// Wait to simulate a query response.
-	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
-	log.Printf("Query: QID[%d] CID[%d] CAP[%d] LEN[%d]\n", aQuery, conn.(*dbConnection).ID, aPool.Cap(), aPool.Len())
-} // performQueries()
 
 /* _EoF_ */
